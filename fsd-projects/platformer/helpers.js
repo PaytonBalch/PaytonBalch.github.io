@@ -357,6 +357,23 @@ function projectileCollision() {
       return;
     }
 
+    for (var j = 0; j < platforms.length; j++) {
+      if (
+        projectiles[i].x < platforms[j].x + platforms[j].width &&
+        projectiles[i].x + projectiles[i].width > platforms[j].x &&
+        projectiles[i].y < platforms[j].y + platforms[j].height &&
+        projectiles[i].y + projectiles[i].height > platforms[j].y
+      ) {
+        projectiles.splice(i, 1);
+        i--;
+        break;
+      }
+    }
+
+    if (i < 0 || i === projectiles.length) {
+      continue;
+    }
+
     //collision with the player
     if (
       projectiles[i].x < player.x + hitBoxWidth &&
@@ -545,8 +562,11 @@ function drawProjectiles() {
 
 function drawCannons() {
   for (var i = 0; i < cannons.length; i++) {
-    if (cannons[i].projectileCountdown >= cannons[i].timeBetweenShots) {
+    if (cannons[i].pauseCountdown > 0) {
+      cannons[i].pauseCountdown = cannons[i].pauseCountdown - 1;
+    } else if (cannons[i].projectileCountdown >= cannons[i].timeBetweenShots) {
       cannons[i].projectileCountdown = 0;
+      cannons[i].shotsSincePause = cannons[i].shotsSincePause + 1;
       createProjectile(
         cannons[i].location,
         cannons[i].x,
@@ -554,6 +574,10 @@ function drawCannons() {
         cannons[i].projectileWidth,
         cannons[i].projectileHeight
       );
+      if (cannons[i].shotsSincePause >= cannons[i].pauseAfterShots) {
+        cannons[i].shotsSincePause = 0;
+        cannons[i].pauseCountdown = cannons[i].pauseDuration;
+      }
     } else {
       cannons[i].projectileCountdown = cannons[i].projectileCountdown + 1;
     }
@@ -760,7 +784,9 @@ function createCannon(
   height = defaultProjectileHeight,
   minPos = null,
   maxPos = null,
-  speed = 1
+  speed = 1,
+  pauseAfterShots = 0,
+  pauseDuration = 0
 ) {
   if (wallLocation === "top") {
     cannons.push({
@@ -768,6 +794,10 @@ function createCannon(
       y: cannonHeight,
       rotation: 180,
       projectileCountdown: 0,
+      shotsSincePause: 0,
+      pauseAfterShots: pauseAfterShots || Infinity,
+      pauseCountdown: 0,
+      pauseDuration: pauseDuration / (1000 / frameRate),
       location: wallLocation,
       timeBetweenShots: timeBetweenShots / (1000 / frameRate),
       projectileWidth: width,
@@ -785,6 +815,10 @@ function createCannon(
       y: canvas.height - cannonHeight,
       rotation: 0,
       projectileCountdown: 0,
+      shotsSincePause: 0,
+      pauseAfterShots: pauseAfterShots || Infinity,
+      pauseCountdown: 0,
+      pauseDuration: pauseDuration / (1000 / frameRate),
       location: wallLocation,
       timeBetweenShots: timeBetweenShots / (1000 / frameRate),
       projectileWidth: width,
@@ -802,6 +836,10 @@ function createCannon(
       y: position,
       rotation: 90,
       projectileCountdown: 0,
+      shotsSincePause: 0,
+      pauseAfterShots: pauseAfterShots || Infinity,
+      pauseCountdown: 0,
+      pauseDuration: pauseDuration / (1000 / frameRate),
       location: wallLocation,
       timeBetweenShots: timeBetweenShots / (1000 / frameRate),
       projectileWidth: width,
@@ -819,6 +857,10 @@ function createCannon(
       y: position,
       rotation: 270,
       projectileCountdown: 0,
+      shotsSincePause: 0,
+      pauseAfterShots: pauseAfterShots || Infinity,
+      pauseCountdown: 0,
+      pauseDuration: pauseDuration / (1000 / frameRate),
       location: wallLocation,
       timeBetweenShots: timeBetweenShots / (1000 / frameRate),
       projectileWidth: width,
